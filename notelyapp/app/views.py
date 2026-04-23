@@ -4,7 +4,9 @@ from django.http import HttpRequest
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from .forms import NoteForm
-from notelyapp.app.models import Note
+from .models import Note
+
+
 
 # Create your views here.
 def home(request):

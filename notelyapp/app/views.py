@@ -1,3 +1,93 @@
-from django.shortcuts import render
+from datetime import datetime
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpRequest
+from django.views.decorators.http import require_http_methods
+from django.contrib import messages
+from .forms import NoteForm
+from notelyapp.app.models import Note
 
 # Create your views here.
+def home(request):
+    """Renders the home page"""
+    assert isinstance(request,HttpRequest)
+    notes = Note.objects.filter(is_deleted=False)
+    return render(
+        request,
+        'app/index.html',
+        {
+            'title':'My Notes',
+            'year':datetime.now().year,
+            'notes':notes
+        }
+    )
+
+def note_detail(request, pk):
+    """renders the note detail page"""
+    assert isinstance(request,HttpRequest)
+    note = get_object_or_404(Note,pk=pk)
+    return render(
+        request,
+        'app/note_detail.html',
+        {
+            'title':'Note Detail',
+            'year':datetime.now().year,
+            'note':note
+        }
+    )
+
+def create_note(request):
+    """renders the create note page"""
+    print(request.method)
+    assert isinstance(request,HttpRequest)
+    if request.method == "POST":
+        form = NoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.create()
+            return redirect("home")
+    else:
+        form = NoteForm
+        return render(
+            request,
+            'app/create_note.html',
+            {
+                'title':'New Note',
+                'year':datetime.now().year,
+                'form':form
+            }
+        )
+
+def edit_note(request, pk):
+    """Renders the edit note page"""
+    print(request.method)
+    assert isinstance(request, HttpRequest)
+    note = get_object_or_404(Note,pk=pk)
+
+    if request.method == "POST":
+        form = NoteForm(request.POST, instance=note)
+        if form.is_valid():
+            note = form.save(commit = False)
+            note.edit()
+            return redirect("home")
+    
+    else:
+        form = NoteForm(instance=note)
+        return render(
+            request,
+            'app/edit_note.html',
+            {
+                'title':'Edit Note',
+                'year':datetime.now().year,
+                'form':form,
+                'id':note.id
+            }
+        )
+
+def delete_note(request,pk):
+    """Deletes note and returns to home page"""
+    assert isinstance(request,HttpRequest)
+    note = get_object_or_404(Note,pk=pk)
+    note.delete()
+
+    return redirect("home")
+
